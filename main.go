@@ -3,28 +3,19 @@ package main
 import (
 	"MemoryStorageServer/collection"
 	"fmt"
-	"time"
 )
 
 func main() {
-	mc, err := collection.Create("test", collection.TypeString, 5)
+	col := collection.NewAsyncCollection()
 
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	mc, _ := collection.Create("test", collection.TypeString, 10)
+	col.Set("test", mc)
 
-	time.Sleep(10 * time.Second)
+	v, _ := col.Get("test")
+	fmt.Println(v)
 
-	asyncCollection := collection.NewAsyncCollection()
-	asyncCollection.Set("test", mc)
+	col.UpdateTTL("test", 200)
 
-	asyncCollection.Remove("test")
-
-	test, err := asyncCollection.Get("test")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(test)
+	v, _ = col.Get("test")
+	fmt.Println(v)
 }

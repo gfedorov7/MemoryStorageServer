@@ -14,11 +14,41 @@ type AsyncCollectionInterface interface {
 	Set(key string, mc MemoryCollection)
 	Get(key string) (MemoryCollection, error)
 	Remove(key string) bool
+	RemoveAllExpired()
+	UpdateTTL(key string, ttl int) (bool, error)
 }
 
 func NewAsyncCollection() AsyncCollectionInterface {
 	return &AsyncCollection{
 		collection: make(map[string]MemoryCollection),
+	}
+}
+
+func (c *AsyncCollection) UpdateTTL(key string, ttl int) (bool, error) {
+	if ttl <= 0 {
+		return false, errors.TTLError{}
+	}
+
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	value, ok := c.collection[key]
+	if !ok {
+		return false, errors.NotFoundError{}
+	}
+
+	value.TTL = ttl
+	c.collection[key] = value
+	return true, nil
+}
+
+func (c *AsyncCollection) RemoveAllExpired() {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	for key, value := range c.collection {
+		if value.IsExpired() {
+			delete(c.collection, key)
+		}
 	}
 }
 
