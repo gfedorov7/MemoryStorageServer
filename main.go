@@ -14,7 +14,10 @@ func main() {
 	v, _ := col.Get("test")
 	fmt.Println(v)
 
-	col.UpdateTTL("test", 200)
+	_, err := col.UpdateTTL("test", 200)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	v, _ = col.Get("test")
 	fmt.Println(v)
