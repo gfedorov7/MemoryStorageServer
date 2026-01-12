@@ -20,12 +20,12 @@ type MemoryCollection struct {
 	TTL       int
 }
 
-func Create(value string, valueType ValueType, ttl int) (*MemoryCollection, error) {
+func Create(value string, valueType ValueType, ttl int) (MemoryCollection, error) {
 	if ttl <= 0 {
-		return nil, errors.TTLError{}
+		return MemoryCollection{}, errors.TTLError{}
 	}
 
-	return &MemoryCollection{
+	return MemoryCollection{
 		Value:     []byte(value),
 		TTL:       ttl,
 		ValueType: valueType,
