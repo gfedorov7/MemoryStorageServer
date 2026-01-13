@@ -5,22 +5,13 @@ import (
 	"time"
 )
 
-type ValueType uint8
-
-const (
-	TypeString ValueType = iota + 1
-	TypeInt
-	TypeFloat
-)
-
 type MemoryCollection struct {
 	Value     []byte
-	ValueType ValueType
 	CreatedAt time.Time
 	TTL       time.Duration
 }
 
-func Create(value string, valueType ValueType, ttl time.Duration) (MemoryCollection, error) {
+func Create(value string, ttl time.Duration) (MemoryCollection, error) {
 	if ttl <= 0 {
 		return MemoryCollection{}, errors.TTLError{}
 	}
@@ -28,7 +19,6 @@ func Create(value string, valueType ValueType, ttl time.Duration) (MemoryCollect
 	return MemoryCollection{
 		Value:     []byte(value),
 		TTL:       ttl,
-		ValueType: valueType,
 		CreatedAt: getCurrentTime(),
 	}, nil
 }

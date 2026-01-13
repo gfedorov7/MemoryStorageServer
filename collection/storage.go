@@ -26,35 +26,6 @@ func NewAsyncCollection() AsyncCollectionInterface {
 	}
 }
 
-func (c *AsyncCollection) UpdateTTL(key string, ttl time.Duration) (bool, error) {
-	if ttl <= 0 {
-		return false, errors.TTLError{}
-	}
-
-	c.mux.Lock()
-	defer c.mux.Unlock()
-
-	value, ok := c.collection[key]
-	if !ok {
-		return false, errors.NotFoundError{}
-	}
-
-	value.TTL = ttl
-	value.CreatedAt = getCurrentTime()
-	c.collection[key] = value
-	return true, nil
-}
-
-func (c *AsyncCollection) RemoveAllExpired() {
-	c.mux.Lock()
-	defer c.mux.Unlock()
-	for key, value := range c.collection {
-		if value.IsExpired() {
-			delete(c.collection, key)
-		}
-	}
-}
-
 func (c *AsyncCollection) Set(key string, value MemoryCollection) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
@@ -90,6 +61,35 @@ func (c *AsyncCollection) Remove(key string) bool {
 		return true
 	}
 	return false
+}
+
+func (c *AsyncCollection) RemoveAllExpired() {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	for key, value := range c.collection {
+		if value.IsExpired() {
+			delete(c.collection, key)
+		}
+	}
+}
+
+func (c *AsyncCollection) UpdateTTL(key string, ttl time.Duration) (bool, error) {
+	if ttl <= 0 {
+		return false, errors.TTLError{}
+	}
+
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	value, ok := c.collection[key]
+	if !ok {
+		return false, errors.NotFoundError{}
+	}
+
+	value.TTL = ttl
+	value.CreatedAt = getCurrentTime()
+	c.collection[key] = value
+	return true, nil
 }
 
 func (c *AsyncCollection) StartJanitor(interval time.Duration) {
