@@ -3,6 +3,7 @@ package collection
 import (
 	"MemoryStorageServer/errors"
 	"sync"
+	"time"
 )
 
 type AsyncCollection struct {
@@ -15,7 +16,8 @@ type AsyncCollectionInterface interface {
 	Get(key string) (MemoryCollection, error)
 	Remove(key string) bool
 	RemoveAllExpired()
-	UpdateTTL(key string, ttl int) (bool, error)
+	UpdateTTL(key string, ttl time.Duration) (bool, error)
+	StartJanitor(interval time.Duration)
 }
 
 func NewAsyncCollection() AsyncCollectionInterface {
@@ -24,7 +26,7 @@ func NewAsyncCollection() AsyncCollectionInterface {
 	}
 }
 
-func (c *AsyncCollection) UpdateTTL(key string, ttl int) (bool, error) {
+func (c *AsyncCollection) UpdateTTL(key string, ttl time.Duration) (bool, error) {
 	if ttl <= 0 {
 		return false, errors.TTLError{}
 	}
@@ -38,6 +40,7 @@ func (c *AsyncCollection) UpdateTTL(key string, ttl int) (bool, error) {
 	}
 
 	value.TTL = ttl
+	value.CreatedAt = getCurrentTime()
 	c.collection[key] = value
 	return true, nil
 }
@@ -66,6 +69,10 @@ func (c *AsyncCollection) Get(key string) (MemoryCollection, error) {
 	v, ok := c.collection[key]
 
 	if ok && v.IsExpired() {
+		c.mux.RUnlock()
+		c.mux.Lock()
+		delete(c.collection, key)
+		c.mux.Unlock()
 		return MemoryCollection{}, errors.ExpiredError{Arg: key}
 	} else if ok {
 		return v, nil
@@ -83,4 +90,15 @@ func (c *AsyncCollection) Remove(key string) bool {
 		return true
 	}
 	return false
+}
+
+func (c *AsyncCollection) StartJanitor(interval time.Duration) {
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			c.RemoveAllExpired()
+		}
+	}()
 }

@@ -16,11 +16,11 @@ const (
 type MemoryCollection struct {
 	Value     []byte
 	ValueType ValueType
-	CreatedAt int64
-	TTL       int
+	CreatedAt time.Time
+	TTL       time.Duration
 }
 
-func Create(value string, valueType ValueType, ttl int) (MemoryCollection, error) {
+func Create(value string, valueType ValueType, ttl time.Duration) (MemoryCollection, error) {
 	if ttl <= 0 {
 		return MemoryCollection{}, errors.TTLError{}
 	}
@@ -33,11 +33,11 @@ func Create(value string, valueType ValueType, ttl int) (MemoryCollection, error
 	}, nil
 }
 
-func getCurrentTime() int64 {
-	return time.Now().Unix()
+func getCurrentTime() time.Time {
+	return time.Now()
 }
 
 func (mc *MemoryCollection) IsExpired() bool {
-	expiredTime := mc.CreatedAt + int64(mc.TTL)
+	expiredTime := mc.CreatedAt.Unix() + int64(mc.TTL.Seconds())
 	return expiredTime < time.Now().Unix()
 }
