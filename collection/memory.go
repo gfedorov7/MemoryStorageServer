@@ -28,6 +28,6 @@ func getCurrentTime() time.Time {
 }
 
 func (mc *MemoryCollection) IsExpired() bool {
-	expiredTime := mc.CreatedAt.Unix() + int64(mc.TTL.Seconds())
-	return expiredTime < time.Now().Unix()
+	expiredTime := mc.CreatedAt.Add(mc.TTL)
+	return expiredTime.Before(time.Now())
 }
