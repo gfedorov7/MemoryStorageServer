@@ -34,22 +34,19 @@ func (c *AsyncCollection) Set(key string, value MemoryCollection) {
 }
 
 func (c *AsyncCollection) Get(key string) (MemoryCollection, error) {
-	c.mux.RLock()
-	defer c.mux.RUnlock()
+	c.mux.Lock()
+	defer c.mux.Unlock()
 
 	v, ok := c.collection[key]
 
-	if ok && v.IsExpired() {
-		c.mux.RUnlock()
-		c.mux.Lock()
-		delete(c.collection, key)
-		c.mux.Unlock()
-		return MemoryCollection{}, errors.ExpiredError{Arg: key}
-	} else if ok {
-		return v, nil
-	} else {
+	if !ok {
 		return MemoryCollection{}, errors.NotFoundError{Arg: key}
+	} else if v.IsExpired() {
+		delete(c.collection, key)
+		return MemoryCollection{}, errors.ExpiredError{Arg: key}
 	}
+
+	return v, nil
 }
 
 func (c *AsyncCollection) Remove(key string) bool {
