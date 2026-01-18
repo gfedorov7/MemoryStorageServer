@@ -12,6 +12,7 @@ func TestMemoryCollection_IsExpired(t *testing.T) {
 		Value     []byte
 		CreatedAt time.Time
 		TTL       time.Duration
+		clock     Clock
 		expected  bool
 	}{
 		{
@@ -42,7 +43,7 @@ func TestMemoryCollection_IsExpired(t *testing.T) {
 				TTL:       tt.TTL,
 			}
 
-			result := mc.IsExpired()
+			result := mc.IsExpired(RealClock{}.Now())
 			if result != tt.expected {
 				t.Fatalf("expected %v, got %v", tt.expected, result)
 			}

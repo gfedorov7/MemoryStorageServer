@@ -9,6 +9,8 @@ import (
 type AsyncCollection struct {
 	collection map[string]MemoryCollection
 	mux        sync.RWMutex
+	stop       chan struct{}
+	Clock      Clock
 }
 
 type AsyncCollectionInterface interface {
@@ -18,11 +20,14 @@ type AsyncCollectionInterface interface {
 	RemoveAllExpired()
 	UpdateTTL(key string, ttl time.Duration) (bool, error)
 	StartJanitor(interval time.Duration)
+	StopJanitor()
 }
 
 func NewAsyncCollection() AsyncCollectionInterface {
 	return &AsyncCollection{
 		collection: make(map[string]MemoryCollection),
+		stop:       make(chan struct{}),
+		Clock:      RealClock{},
 	}
 }
 
@@ -34,18 +39,22 @@ func (c *AsyncCollection) Set(key string, value MemoryCollection) {
 }
 
 func (c *AsyncCollection) Get(key string) (MemoryCollection, error) {
-	c.mux.Lock()
-	defer c.mux.Unlock()
-
+	c.mux.RLock()
 	v, ok := c.collection[key]
+	c.mux.RUnlock()
 
 	if !ok {
 		return MemoryCollection{}, errors.NotFoundError{Arg: key}
-	} else if v.IsExpired() {
+	} else if v.IsExpired(c.Clock.Now()) {
+		c.mux.Lock()
 		delete(c.collection, key)
+		c.mux.Unlock()
 		return MemoryCollection{}, errors.ExpiredError{Arg: key}
 	}
 
+	copyValue := make([]byte, len(v.Value))
+	copy(copyValue, v.Value)
+	v.Value = copyValue
 	return v, nil
 }
 
@@ -61,13 +70,20 @@ func (c *AsyncCollection) Remove(key string) bool {
 }
 
 func (c *AsyncCollection) RemoveAllExpired() {
-	c.mux.Lock()
-	defer c.mux.Unlock()
+	var deleteKeys []string
+	c.mux.RLock()
 	for key, value := range c.collection {
-		if value.IsExpired() {
-			delete(c.collection, key)
+		if value.IsExpired(c.Clock.Now()) {
+			deleteKeys = append(deleteKeys, key)
 		}
 	}
+	c.mux.RUnlock()
+
+	c.mux.Lock()
+	for _, key := range deleteKeys {
+		delete(c.collection, key)
+	}
+	c.mux.Unlock()
 }
 
 func (c *AsyncCollection) UpdateTTL(key string, ttl time.Duration) (bool, error) {
@@ -84,7 +100,7 @@ func (c *AsyncCollection) UpdateTTL(key string, ttl time.Duration) (bool, error)
 	}
 
 	value.TTL = ttl
-	value.CreatedAt = getCurrentTime()
+	value.CreatedAt = c.Clock.Now()
 	c.collection[key] = value
 	return true, nil
 }
@@ -94,8 +110,17 @@ func (c *AsyncCollection) StartJanitor(interval time.Duration) {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
-		for range ticker.C {
-			c.RemoveAllExpired()
+		for {
+			select {
+			case <-ticker.C:
+				c.RemoveAllExpired()
+			case <-c.stop:
+				return
+			}
 		}
 	}()
+}
+
+func (c *AsyncCollection) StopJanitor() {
+	close(c.stop)
 }

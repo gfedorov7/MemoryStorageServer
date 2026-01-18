@@ -11,7 +11,7 @@ type MemoryCollection struct {
 	TTL       time.Duration
 }
 
-func Create(value string, ttl time.Duration) (MemoryCollection, error) {
+func Create(value string, ttl time.Duration, now time.Time) (MemoryCollection, error) {
 	if ttl <= 0 {
 		return MemoryCollection{}, errors.TTLError{}
 	}
@@ -19,15 +19,11 @@ func Create(value string, ttl time.Duration) (MemoryCollection, error) {
 	return MemoryCollection{
 		Value:     []byte(value),
 		TTL:       ttl,
-		CreatedAt: getCurrentTime(),
+		CreatedAt: now,
 	}, nil
 }
 
-func getCurrentTime() time.Time {
-	return time.Now()
-}
-
-func (mc *MemoryCollection) IsExpired() bool {
+func (mc *MemoryCollection) IsExpired(now time.Time) bool {
 	expiredTime := mc.CreatedAt.Add(mc.TTL)
-	return expiredTime.Before(time.Now())
+	return expiredTime.Before(now)
 }
