@@ -75,39 +75,46 @@ func handleConnection(conn net.Conn, storage collection.AsyncCollectionInterface
 			continue
 		}
 
-		commandAnswer, err := commandHandler(storage, split[0], split[1:])
+		command := split[0]
+		commandAnswer, err := commandHandler(storage, command, split[1:])
 		if err != nil {
 			conn.Write([]byte(err.Error() + "\n"))
-		} else {
+		} else if commandAnswer != nil {
 			conn.Write([]byte(commandAnswer.String() + "\n"))
+		} else {
+			conn.Write([]byte(command + " success" + "\n"))
 		}
 	}
 }
 
 func commandHandler(storage collection.AsyncCollectionInterface, command string,
-	args []string) (collection.MemoryCollection, error) {
+	args []string) (*collection.MemoryCollection, error) {
 	switch command {
 	case "GET":
 		if len(args) < 1 {
-			return collection.MemoryCollection{}, fmt.Errorf("GET command wait 1 arg")
+			return nil, fmt.Errorf("GET command wait 1 arg")
 		}
-		return storage.Get(args[0])
+		val, err := storage.Get(args[0])
+		if err != nil {
+			return nil, err
+		}
+		return &val, nil
 	case "SET":
 		if len(args) < 3 {
-			return collection.MemoryCollection{}, fmt.Errorf("SET command wait 2 arg")
+			return nil, fmt.Errorf("SET command wait 2 arg")
 		}
 		num, err := strconv.Atoi(args[2])
 		if err != nil {
-			return collection.MemoryCollection{}, err
+			return nil, err
 		}
 		memoryCollection, err := collection.Create(args[1], time.Duration(num)*time.Second, time.Now())
 		if err != nil {
-			return collection.MemoryCollection{}, err
+			return nil, err
 		}
 		storage.Set(args[0], memoryCollection)
-		return collection.MemoryCollection{}, fmt.Errorf("success add")
+		return nil, nil
 	default:
-		return collection.MemoryCollection{}, fmt.Errorf("unknow command")
+		return nil, fmt.Errorf("unknow command")
 	}
 }
 
