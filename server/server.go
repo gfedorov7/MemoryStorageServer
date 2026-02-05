@@ -1,11 +1,14 @@
 package main
 
 import (
+	"MemoryStorageServer/collection"
 	"bufio"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"sync/atomic"
+	"time"
 )
 
 var hasConnection atomic.Bool
@@ -15,14 +18,14 @@ const (
 	port    = ":8080"
 )
 
-func StartServer() {
+func StartServer(storage collection.AsyncCollectionInterface) {
 	listener, err := buildServerConnection()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	err = acceptConnection(listener)
+	err = acceptConnection(listener, storage)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -37,7 +40,7 @@ func buildServerConnection() (*net.TCPListener, error) {
 	return net.ListenTCP(network, tcpAddr)
 }
 
-func acceptConnection(listener *net.TCPListener) error {
+func acceptConnection(listener *net.TCPListener, storage collection.AsyncCollectionInterface) error {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -50,11 +53,11 @@ func acceptConnection(listener *net.TCPListener) error {
 			continue
 		}
 
-		go handleConnection(conn)
+		go handleConnection(conn, storage)
 	}
 }
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, storage collection.AsyncCollectionInterface) {
 	defer conn.Close()
 	defer hasConnection.Store(false)
 
@@ -72,22 +75,45 @@ func handleConnection(conn net.Conn) {
 			continue
 		}
 
-		commandAnswer := commandHandler(split[0]) + "\n"
-		conn.Write([]byte(commandAnswer))
+		commandAnswer, err := commandHandler(storage, split[0], split[1:])
+		if err != nil {
+			conn.Write([]byte(err.Error() + "\n"))
+		} else {
+			conn.Write([]byte(commandAnswer.String() + "\n"))
+		}
 	}
 }
 
-func commandHandler(command string) string {
+func commandHandler(storage collection.AsyncCollectionInterface, command string,
+	args []string) (collection.MemoryCollection, error) {
 	switch command {
 	case "GET":
-		return "receive command get"
+		if len(args) < 1 {
+			return collection.MemoryCollection{}, fmt.Errorf("GET command wait 1 arg")
+		}
+		return storage.Get(args[0])
 	case "SET":
-		return "receive command set"
+		if len(args) < 3 {
+			return collection.MemoryCollection{}, fmt.Errorf("SET command wait 2 arg")
+		}
+		num, err := strconv.Atoi(args[2])
+		if err != nil {
+			return collection.MemoryCollection{}, err
+		}
+		memoryCollection, err := collection.Create(args[1], time.Duration(num)*time.Second, time.Now())
+		if err != nil {
+			return collection.MemoryCollection{}, err
+		}
+		storage.Set(args[0], memoryCollection)
+		return collection.MemoryCollection{}, fmt.Errorf("success add")
 	default:
-		return "unknow command"
+		return collection.MemoryCollection{}, fmt.Errorf("unknow command")
 	}
 }
 
 func main() {
-	StartServer()
+	storage := collection.NewAsyncCollection()
+	go storage.StartJanitor(time.Duration(100) * time.Second)
+
+	StartServer(storage)
 }
