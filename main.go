@@ -11,7 +11,11 @@ func main() {
 	col := collection.NewAsyncCollection()
 	go col.StartJanitor(time.Duration(5) * time.Second)
 
-	v, err := collection.Create("gleb", time.Duration(5)*time.Second)
+	v, err := collection.Create(
+		"gleb",
+		time.Duration(5)*time.Second,
+		time.Now(),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
