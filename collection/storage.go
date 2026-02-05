@@ -34,8 +34,8 @@ func (c *AsyncCollection) Set(key string, value MemoryCollection) {
 }
 
 func (c *AsyncCollection) Get(key string) (MemoryCollection, error) {
-	c.mux.Lock()
-	defer c.mux.Unlock()
+	c.mux.RLock()
+	defer c.mux.RUnlock()
 
 	v, ok := c.collection[key]
 
