@@ -2,6 +2,7 @@ package collection
 
 import (
 	"MemoryStorageServer/errors"
+	"strconv"
 	"time"
 )
 
@@ -26,4 +27,9 @@ func Create(value string, ttl time.Duration, now time.Time) (MemoryCollection, e
 func (mc *MemoryCollection) IsExpired(now time.Time) bool {
 	expiredTime := mc.CreatedAt.Add(mc.TTL)
 	return expiredTime.Before(now)
+}
+
+func (mc *MemoryCollection) String() string {
+	return "value=" + string(mc.Value) + "; ttl=" + strconv.FormatInt(int64(mc.TTL), 10) +
+		"; createdAt=" + mc.CreatedAt.String()
 }
