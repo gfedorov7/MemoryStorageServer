@@ -1,11 +1,11 @@
 package main
 
 import (
+	"MemoryStorageServer/cmd"
 	"MemoryStorageServer/collection"
 	"bufio"
 	"fmt"
 	"net"
-	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -91,28 +91,9 @@ func commandHandler(storage collection.AsyncCollectionInterface, command string,
 	args []string) (*collection.MemoryCollection, error) {
 	switch command {
 	case "GET":
-		if len(args) < 1 {
-			return nil, fmt.Errorf("GET command wait 1 arg")
-		}
-		val, err := storage.Get(args[0])
-		if err != nil {
-			return nil, err
-		}
-		return &val, nil
+		return cmd.GetHandler(storage, args)
 	case "SET":
-		if len(args) < 3 {
-			return nil, fmt.Errorf("SET command wait 2 arg")
-		}
-		num, err := strconv.Atoi(args[2])
-		if err != nil {
-			return nil, err
-		}
-		memoryCollection, err := collection.Create(args[1], time.Duration(num)*time.Second, time.Now())
-		if err != nil {
-			return nil, err
-		}
-		storage.Set(args[0], memoryCollection)
-		return nil, nil
+		return nil, cmd.SetHandler(storage, args)
 	default:
 		return nil, fmt.Errorf("unknow command")
 	}
