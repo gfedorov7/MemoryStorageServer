@@ -1,17 +1,17 @@
 package main
 
 import (
-	"MemoryStorageServer/collection"
+	collection2 "MemoryStorageServer/internal/collection"
 	"fmt"
 	"log"
 	"time"
 )
 
 func main() {
-	col := collection.NewAsyncCollection()
+	col := collection2.NewAsyncCollection()
 	go col.StartJanitor(time.Duration(5) * time.Second)
 
-	v, err := collection.Create(
+	v, err := collection2.Create(
 		"gleb",
 		time.Duration(5)*time.Second,
 		time.Now(),

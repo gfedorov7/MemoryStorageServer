@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"MemoryStorageServer/collection"
+	"MemoryStorageServer/internal/collection"
 )
 
 func removeAllExpiredHandler(storage collection.AsyncCollectionInterface) error {

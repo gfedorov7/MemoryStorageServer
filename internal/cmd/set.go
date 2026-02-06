@@ -1,13 +1,13 @@
 package cmd
 
 import (
-	"MemoryStorageServer/collection"
+	collection2 "MemoryStorageServer/internal/collection"
 	"fmt"
 	"strconv"
 	"time"
 )
 
-func setHandler(storage collection.AsyncCollectionInterface, args []string) error {
+func setHandler(storage collection2.AsyncCollectionInterface, args []string) error {
 	if len(args) < 3 {
 		return fmt.Errorf("SET command wait 3 arg")
 	}
@@ -17,7 +17,7 @@ func setHandler(storage collection.AsyncCollectionInterface, args []string) erro
 		return err
 	}
 
-	memoryCollection, err := collection.Create(args[1], time.Duration(num)*time.Second, time.Now())
+	memoryCollection, err := collection2.Create(args[1], time.Duration(num)*time.Second, time.Now())
 	if err != nil {
 		return err
 	}

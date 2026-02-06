@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"MemoryStorageServer/collection"
+	collection2 "MemoryStorageServer/internal/collection"
 	"fmt"
 )
 
-func CommandHandler(storage collection.AsyncCollectionInterface, command string,
-	args []string) (*collection.MemoryCollection, error) {
+func CommandHandler(storage collection2.AsyncCollectionInterface, command string,
+	args []string) (*collection2.MemoryCollection, error) {
 	switch command {
 	case "GET":
 		return getHandler(storage, args)

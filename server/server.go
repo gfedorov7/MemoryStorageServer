@@ -1,8 +1,9 @@
 package main
 
 import (
-	"MemoryStorageServer/cmd"
-	"MemoryStorageServer/collection"
+	"MemoryStorageServer/internal/cmd"
+	"MemoryStorageServer/internal/collection"
+	"MemoryStorageServer/internal/parser"
 	"bufio"
 	"fmt"
 	"net"
@@ -13,13 +14,8 @@ import (
 
 var hasConnection atomic.Bool
 
-const (
-	network = "tcp"
-	port    = ":8080"
-)
-
-func StartServer(storage collection.AsyncCollectionInterface) {
-	listener, err := buildServerConnection()
+func StartServer(network, address string, storage collection.AsyncCollectionInterface) {
+	listener, err := buildServerConnection(network, address)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -31,12 +27,13 @@ func StartServer(storage collection.AsyncCollectionInterface) {
 	}
 }
 
-func buildServerConnection() (*net.TCPListener, error) {
-	tcpAddr, err := net.ResolveTCPAddr(network, port)
+func buildServerConnection(network, address string) (*net.TCPListener, error) {
+	tcpAddr, err := net.ResolveTCPAddr(network, address)
 	if err != nil {
 		return nil, err
 	}
 
+	fmt.Println("Application start on address:", tcpAddr.String())
 	return net.ListenTCP(network, tcpAddr)
 }
 
@@ -88,8 +85,11 @@ func commandHandler(storage collection.AsyncCollectionInterface, split []string,
 }
 
 func main() {
+	var consoleFlag parser.ConsoleFlag
+	parser.ParseFlag(&consoleFlag)
+
 	storage := collection.NewAsyncCollection()
 	go storage.StartJanitor(time.Duration(100) * time.Second)
 
-	StartServer(storage)
+	StartServer(consoleFlag.Network, consoleFlag.Address, storage)
 }

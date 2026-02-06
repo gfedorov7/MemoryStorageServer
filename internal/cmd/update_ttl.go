@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"MemoryStorageServer/collection"
+	"MemoryStorageServer/internal/collection"
 	"fmt"
 	"strconv"
 	"time"

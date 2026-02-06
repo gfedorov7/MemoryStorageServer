@@ -1,6 +1,7 @@
 package main
 
 import (
+	"MemoryStorageServer/internal/parser"
 	"bufio"
 	"fmt"
 	"net"
@@ -13,8 +14,8 @@ const (
 	port    = ":8080"
 )
 
-func StartClient() {
-	conn, err := buildClientConnection()
+func StartClient(network, address string) {
+	conn, err := buildClientConnection(network, address)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -42,8 +43,8 @@ func StartClient() {
 	}
 }
 
-func buildClientConnection() (net.Conn, error) {
-	tcpAddr, err := net.ResolveTCPAddr(network, port)
+func buildClientConnection(network, address string) (net.Conn, error) {
+	tcpAddr, err := net.ResolveTCPAddr(network, address)
 	if err != nil {
 		return nil, err
 	}
@@ -76,5 +77,8 @@ func writeToServerMessage(messageReader *bufio.Reader, conn net.Conn, errors cha
 }
 
 func main() {
-	StartClient()
+	var consoleFlag parser.ConsoleFlag
+	parser.ParseFlag(&consoleFlag)
+
+	StartClient(consoleFlag.Network, consoleFlag.Address)
 }

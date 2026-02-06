@@ -1,7 +1,7 @@
 package collection
 
 import (
-	"MemoryStorageServer/errors"
+	"MemoryStorageServer/internal/errors"
 	"sync"
 	"time"
 )
