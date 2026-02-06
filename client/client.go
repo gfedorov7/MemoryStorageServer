@@ -9,11 +9,6 @@ import (
 	"strings"
 )
 
-const (
-	network = "tcp"
-	port    = ":8080"
-)
-
 func StartClient(network, address string) {
 	conn, err := buildClientConnection(network, address)
 	if err != nil {
