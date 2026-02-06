@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func SetHandler(storage collection.AsyncCollectionInterface, args []string) error {
+func setHandler(storage collection.AsyncCollectionInterface, args []string) error {
 	if len(args) < 3 {
 		return fmt.Errorf("SET command wait 3 arg")
 	}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func RemoveHandler(
+func removeHandler(
 	storage collection.AsyncCollectionInterface,
 	args []string) error {
 

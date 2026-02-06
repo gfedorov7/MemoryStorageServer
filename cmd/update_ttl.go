@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func UpdateTTLHandler(
+func updateTTLHandler(
 	storage collection.AsyncCollectionInterface,
 	args []string) error {
 

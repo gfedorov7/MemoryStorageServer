@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func GetHandler(
+func getHandler(
 	storage collection.AsyncCollectionInterface,
 	args []string) (*collection.MemoryCollection, error) {
 

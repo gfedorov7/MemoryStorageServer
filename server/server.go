@@ -71,33 +71,19 @@ func handleConnection(conn net.Conn, storage collection.AsyncCollectionInterface
 
 		split := strings.Split(strings.TrimSpace(data), " ")
 
-		command := split[0]
-		commandAnswer, err := commandHandler(storage, command, split[1:])
-		if err != nil {
-			conn.Write([]byte(err.Error() + "\n"))
-		} else if commandAnswer != nil {
-			conn.Write([]byte(commandAnswer.String() + "\n"))
-		} else {
-			conn.Write([]byte(command + " success" + "\n"))
-		}
+		commandHandler(storage, split, conn)
 	}
 }
 
-func commandHandler(storage collection.AsyncCollectionInterface, command string,
-	args []string) (*collection.MemoryCollection, error) {
-	switch command {
-	case "GET":
-		return cmd.GetHandler(storage, args)
-	case "SET":
-		return nil, cmd.SetHandler(storage, args)
-	case "REMOVE":
-		return nil, cmd.RemoveHandler(storage, args)
-	case "REMOVE_ALL_EXPIRED":
-		return nil, cmd.RemoveAllExpiredHandler(storage)
-	case "UPDATE_TTL":
-		return nil, cmd.UpdateTTLHandler(storage, args)
-	default:
-		return nil, fmt.Errorf("unknow command")
+func commandHandler(storage collection.AsyncCollectionInterface, split []string, conn net.Conn) {
+	command := split[0]
+	commandAnswer, err := cmd.CommandHandler(storage, command, split[1:])
+	if err != nil {
+		conn.Write([]byte(err.Error() + "\n"))
+	} else if commandAnswer != nil {
+		conn.Write([]byte(commandAnswer.String() + "\n"))
+	} else {
+		conn.Write([]byte(command + " success" + "\n"))
 	}
 }
 
