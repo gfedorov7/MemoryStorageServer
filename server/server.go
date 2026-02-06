@@ -70,10 +70,6 @@ func handleConnection(conn net.Conn, storage collection.AsyncCollectionInterface
 		}
 
 		split := strings.Split(strings.TrimSpace(data), " ")
-		if len(split) <= 1 {
-			conn.Write([]byte("invalid command\n"))
-			continue
-		}
 
 		command := split[0]
 		commandAnswer, err := commandHandler(storage, command, split[1:])
@@ -94,6 +90,12 @@ func commandHandler(storage collection.AsyncCollectionInterface, command string,
 		return cmd.GetHandler(storage, args)
 	case "SET":
 		return nil, cmd.SetHandler(storage, args)
+	case "REMOVE":
+		return nil, cmd.RemoveHandler(storage, args)
+	case "REMOVE_ALL_EXPIRED":
+		return nil, cmd.RemoveAllExpiredHandler(storage)
+	case "UPDATE_TTL":
+		return nil, cmd.UpdateTTLHandler(storage, args)
 	default:
 		return nil, fmt.Errorf("unknow command")
 	}

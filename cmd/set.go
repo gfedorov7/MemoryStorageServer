@@ -9,7 +9,7 @@ import (
 
 func SetHandler(storage collection.AsyncCollectionInterface, args []string) error {
 	if len(args) < 3 {
-		return fmt.Errorf("SET command wait 2 arg")
+		return fmt.Errorf("SET command wait 3 arg")
 	}
 
 	num, err := strconv.Atoi(args[2])
